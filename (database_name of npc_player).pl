@@ -1,14 +1,14 @@
 ####################################
 #:: Usage:			Have this script name match the NPC name in the database. Make sure to set a unique faction for you "player_npc" or not 
 #::					and see what happens!!  :-)
-#:: Created:		7April2020
+#:: Created:		10 May 2020
 #:: Version:		wa_200422_01
 #:: Author:			WarAngel
 #:: Description:	To have a NPC create the illusion of other real world players running around.
 #:: With help from:	TurmoilToad,Salvanna,Akkadius,Trust,Kinglykrab
 #:: Plugins:		plugin::RandomWeapons(1, 11169, 50, 200, 230);plugin::RandomFeatures($npc);plugin::wa_Decisions();
 #::					plugin::wa_NameGenerator();plugin::wa_RandomGender();
-#::Future Plans:	I am going to look into making plugins for an array chat spams.
+#:: Future Plans:	I am going to look into making plugins for an array chat spams.
 ####################################
 
 sub EVENT_SPAWN
