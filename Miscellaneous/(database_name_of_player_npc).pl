@@ -55,7 +55,7 @@ sub EVENT_CAST {
 	#$wa_NPC_list= $entity_list->GetNPCList(); #Not needed.
 
 	#$wa_NPCpet = $entity_list->GetMobByID($wa_npcPet); #Not needed.
-	$wa_NPCpet = $entity_list->GetMobByID($npc->GetPetID()); #Works!!
+	$wa_NPCpet = $entity_list->GetMobByID($npc->GetPetID()); #Works!! Get the pet via the NPC.
 
 	#my $entity_list = plugin::val('$entity_list'); #Not needed.
 	#my $npc = plugin::val('$npc'); #Not needed.
