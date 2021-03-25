@@ -88,6 +88,10 @@ sub EVENT_CONNECT {
             $client->GrantAlternateAdvancementAbility($aa, 1);
         }
     }
+
+    my $wa_XPKey = "wa_CharXPforID_" . $client->CharacterID();
+    quest::delete_data($wa_XPKey); #Delete the data_bucket entry, not needed anymore.
+    plugin::Debug("Client logged out before ()XPOn, deleted the data_bucket for them."); #Debug if it works thus far.
 }
 
 sub EVENT_POPUPRESPONSE {
@@ -96,31 +100,78 @@ sub EVENT_POPUPRESPONSE {
 }
 
 sub EVENT_SAY {
-    my $wa_MyXP = $client->GetEXP(); #current characters XP.
+    my $wa_CharXP = $client->GetEXP(); #Current characters XP.
+    #my $wa_CharIDKey = $client->CharacterID(); #Current characters ID.
+    my $wa_XPKey = "wa_CharXPforID_" . $client->CharacterID();
+    my $wa_KeyCheck = quest::get_data($wa_XPKey); #If a key is already made...get it.
+    #my $wa_TimerKeyCheck = quest::get_data(wa_TimerKey); #Not needed here.
 
-    if ($text=~/()XPOff/) { #Did the player type in the command?
-        quest::settimer("XPTimerCheck", 10); #set a timer.
-        quest::set_data("wa_PlayerXP","$wa_MyXP"); #Create a data_bucket entry with the characters xp for a value.
-        #quest::say("XPOff worked. Your XP is ----" . $wa_MyXP); #Debug if it works thus far.
-        plugin::DiaWind("noquotes{in}{g}Experience~ is now turned off!<br><br><br>{r}BEWARE!!~ If you are close to DINGing, you could experience leveling, de-leveling issues!<br><br><br>...Type {y}()XPOn~ to resume gaining XP.<br><br>"); #Window popup with warnings.
+    if ($text=~/()XPOff/  && !$wa_KeyCheck) { #Did the player type in the command? Have they already started this?
+        quest::settimer(wa_XPOff_Timer, 8); #Set a timer. Be carefull to not use the $_ (Scaler) in a timer name. It is like creating a $_$_data. Bad mojo.
+                                               #Right now any player can 'reset' the timer. But this is not an issue unless hundreds of players all in a few minutes declare a XPOff.
+                                               #In that case it is an easy fix to make the timer 'name' as the players name. But that can make alot of timers firing off all the time.
+                                               #Choose your poison...
+        quest::set_data($wa_XPKey, $wa_CharXP, 86400); #Create a data_bucket entry with the characters xp for a value. Auto expire in 1 day.
+        quest::whisper("Your current XP will be stopped at ---- " . $wa_CharXP); #Debug if it works thus far.
+        plugin::DiaWind("noquotes{in}{in}{g}Experience~ is now turned off!<br><br>{in}{r}BEWARE!!~ If you are close to DINGing, you could experience leveling, de-leveling issues! And if you log off or LD while your xp is turned off. You NEED to {y}()XPOn~ to reset you Characters controller.<br><br>{in}{y}Also you will be reset to accumulating xp if...~<br>1. Stay logged on for more than 24 hours.<br>2. Log off and back on again.<br><br>{in}{in}...Type {y}()XPOn~ to resume gaining XP."); #Window popup with warnings.
+
+        #if ($wa_TimerKeyCheck) { #measure of protection
+        #    quest::set_data(wa_TimerKey, quest::get_data(wa_TimerKey)+1, 86400); #add more to the int and reset the timer.
+        #    plugin::Debug("Added a int to wa_TimerKey worked."); #Debug if it works thus far.
+        #last;
+        #}
+        #if (!$wa_TimerKeyCheck) { #Is there even a key made yet?
+        #    quest::set_data(wa_TimerKey, 1, 86400); # Create a data_bucket and a timer for it to do checks on the EVENT_TIMER. Prevent someone from turning off the timer while others are using it.
+        #    plugin::Debug("Created wa_TimerKey worked."); #Debug if it works thus far.
+        #last;
+        #}
     }
-    if ($text=~/()XPOn/) { #Did the player type in the command?
-        quest::stoptimer("XPTimerCheck"); #STOP a timer.
-        quest::delete_data("wa_PlayerXP"); #Delete the data_bucket entry, not needed anymore.
-        #quest::say("XPOn worked. Your XP is ----" . $wa_MyXP); #Debug if it works thus far.
-        plugin::DiaWind("noquotes{in}{in}{g}Experience~ is now turned on!<br><br>"); #Window popup with warnings.
+    if ($text=~/()XPOn/ && $wa_KeyCheck) { #Did the player type in the command? Only those who started can stop.
+        quest::delete_data($wa_XPKey); #Delete the data_bucket entry, not needed anymore.
+        quest::whisper("Your XP is ---- " . $wa_CharXP . ". And you are again earning XP!"); #Debug if it works thus far.
+        quest::stoptimer(wa_XPOff_Timer); #Stop a timer.
+        plugin::DiaWind("noquotes{in}{in}{g}Experience~ is now turned on!<br><br>You are again gaining experience."); #Window popup with warnings.
+
+        #if (quest::get_data(wa_TimerKey)>1) {
+        #    quest::set_data(wa_TimerKey, quest::get_data(wa_TimerKey)-1); #Sutract a int from the data_base key.
+        #    plugin::Debug("Deleted a int to wa_TimerKey worked."); #Debug if it works thus far.
+        #}
+        #if (quest::get_data(wa_TimerKey) == 1) {
+        #    quest::stoptimer(wa_XPOff_Timer); #STOP a timer. Be carefull to not use the $_ in a timer name. It is like creating a $_$_data. Bad mojo. If a player logs off. The timer...specific to them. Will stop.
+        #    plugin::Debug("Stoptimer worked."); #Debug if it works thus far.
+        #}
     }
 }
 
-sub EVENT_TIMER {
-    my $wa_StoredXP = quest::get_data("wa_PlayerXP"); #Get that value back from the data_bucket entry.
-    my $wa_NewXP = $client->GetEXP(); #get current NEW xp from the character.
-    #plugin::Debug("EVENT_TIMER has reach a ten seconds and fired."); #Debug if it works thus far.
+###########################################################
+#:: End EVENT_SAY
+###########################################################
 
-    if ("XPTimerCheck" && $wa_StoredXP && $wa_NewXP >= $wa_StoredXP) { #Tri-level comparison for protection.
-        #plugin::Debug("If statement passed"); #Debug if it works thus far.
-        #quest::say("Your XP is ----" . $wa_NewXP); #Debug if it works thus far.
-        $client->SetEXP($wa_StoredXP,0,0); #Set the characters Xp back to when you started this whole mess.
-        #quest::say("Your XP is set back to----" . $wa_StoredXP); #Debug if it works thus far.
-    }
+sub EVENT_TIMER { #Timers are entity specific. Not global.
+    #my $wa_CharIDKey = $client->CharacterID();
+    my $wa_XPKey = "wa_CharXPforID_" . $client->CharacterID(); #Create a unique key for these scripts only that make sense to read in the database.
+    my $wa_KeyXPCheck = quest::get_data($wa_XPKey);
+
+        if (wa_XPOff_Timer && $wa_KeyXPCheck) { #Two-level comparison for protection. And good practice to keep the timer from reading alot of info.
+            my $wa_CharKey = $client->CharacterID();
+            my $wa_StoredXP = quest::get_data($wa_XPKey); #Get that value back from the data_bucket entry.
+            my $wa_NewXP = $client->GetEXP(); #get current NEW xp from the character.
+            #my $wa_TimerKeyCheck = quest::get_data(wa_TimerKey); #Useless but worked.
+            #plugin::Debug("EVENT_TIMER has reach a eight seconds and fired."); #Debug if it works thus far.
+
+            if ($wa_CharKey && $wa_StoredXP && $wa_NewXP > $wa_StoredXP) { #Tri-level comparison for protection.
+                #plugin::Debug("if statement passed"); #Debug if it works thus far.
+                #quest::whisper("Your new XP is ---- " . $wa_NewXP); #Debug if it works thus far.
+                $client->SetEXP($wa_StoredXP,0,0); #Set the characters Xp back to when you started this whole mess.
+                #quest::whisper("Your XP is set back to ---- " . $wa_StoredXP); #Debug if it works thus far.
+            }
+            #if (!$wa_TimerKeyCheck) { 
+            #    quest::stoptimer(wa_XPOff_Timer); #STOP a timer. Not needed since if the player logs off or DLs, The Timer stop automaticaly.
+            #    plugin::Debug("Timer check NULL so turned off timer."); #Debug if it works thus far.
+            #}
+        }
 }
+
+###########################################################
+#:: End EVENT_TIMER
+###########################################################
