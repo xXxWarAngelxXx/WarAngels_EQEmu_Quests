@@ -2,7 +2,7 @@
 #:: Usage:					Have this script name match the NPC name in the database. Make sure to set a unique faction for you "player_npc" or not 
 #::							and see what happens!!  :-) If you want to NOT USE a plugin, just comment it out. (Example : #plugin::wa_NameGenerator();).
 #:: Created:				10 May 2020
-#:: Version(wa_ddmmyy_##):	wa_210321_01
+#:: Version(wa_ddmmyy_##):	wa_210327_01
 #:: Author:					WarAngel
 #:: Description:			To have a NPC create the illusion of other real world players running around.
 #:: With help from:			TurmoilToad,Salvanna,Akkadius,Trust,Kinglykrab
