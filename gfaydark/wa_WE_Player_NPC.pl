@@ -36,7 +36,7 @@ sub EVENT_TIMER {
 		#plugin::Debug("ChangeLook done for ----" . $npc->GetName()); # The "d" in debug HAS to be UPPER CASE.
 	}
 	if($timer eq "wa_Decide") { ###What do I want to do?###   #"eq" is used for strings not int "!" means NOT for numbers.
-		plugin::wa_Decisions(50); #Chance to # <= KillMode or # > ChatMode. 50 is 50% kill and 50% chat/emote. 30 is 30% chance to kill. 70% chance to chat/emote.
+		plugin::wa_Decisions(3); #Chance to # <= KillMode or # > ChatMode. 50 is 50% kill and 50% chat/emote. 30 is 30% chance to kill. 70% chance to chat/emote.
 		#plugin::Debug("Decision start for ----" . $npc_GetName()); # The "d" in debug HAS to be UPPER CASE.
 	}
 }
